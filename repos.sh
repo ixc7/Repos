@@ -1,7 +1,37 @@
 #!/usr/local/bin/bash
 
-source './env.sh'
-source './scrollableList.sh'
+pathname="$(dirname ${0})"
+
+helpTxt="
+  usage: $(basename ${0}) -h [QUERY...] 
+
+  options:
+      -h, --help        show help
+      -c, --config      show config
+"
+
+source "${pathname}/env.sh"
+source "${pathname}/scrollableList.sh"
+source "${pathname}/util.sh"
+
+parseArgs () {
+  while [[ ${#*} -gt 0 ]]; do
+    case ${1} in
+      -h | --help)
+        _showHelp "${helpTxt}" && exit 0
+      ;;
+      -c | --config)
+        bat -pp "${pathname}/env.sh" && exit 0
+      ;;
+      *)
+        shift 
+      ;;
+    esac
+  done
+}
+
+# init
+parseArgs "${@}"
 
 # get input 
 [[ ${#*} -gt 0 ]] && 

@@ -26,13 +26,6 @@ _scrollableList () {
           outfile="${1}"
           shift
         ;;
-        -h | --help)
-          _showHelp && exit 0
-        ;;
-        -c | --code)
-          ns &&
-          echo "SOURCE CODE LOL." | bat -pp -l bash && exit 0
-        ;;
         *)
           items+=("${1}")
           shift 
@@ -45,7 +38,6 @@ _scrollableList () {
   parseArgs "${@}"
 
   [[ ${#items[@]} -eq 0 ]] &&
-    _showHelp &&
     exit 1
 
   trap trapSIGINT SIGINT
@@ -111,7 +103,5 @@ _scrollableList () {
       ;;
     esac
   done
-
-  # TODO display lists longer than screen height
 }
 

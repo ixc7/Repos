@@ -1,6 +1,7 @@
 #!/usr/local/bin/bash
 
 # view README.md files
+# pager="glow"
 pager="bat -p -l md"
 
 # max results to fetch (limit 100)

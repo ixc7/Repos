@@ -3,8 +3,8 @@
 _unindent () {
   [[ ${#*} -eq 0 ]] && return 1
 
-  msg="${@}"
-  indent=false
+  local msg="${@}"
+  local indent=false
 
   printLine () {
     while IFS= read -r line; do
@@ -36,15 +36,9 @@ _unindent () {
 }
 
 _showHelp () {
-  local msg="
-  usage: $(basename ${0}) [ARRAY] [OUTFILE] 
-
-    options:
-        -o, --outfile     write output to file
-        -h, --help        show help
-        -c, --code        show source code
-  "
-
-  _unindent "${msg}" | tail -n +2 | bat -pp -l help
+  _unindent "${@}" | 
+    tail -n +2 | 
+    bat -pp -l help &&
+  echo
 }
 
