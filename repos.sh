@@ -14,17 +14,17 @@ source "${pathname}/env.sh"
 source "${pathname}/scrollableList.sh"
 source "${pathname}/util.sh"
 
-parseArgs () {
+parseArgs() {
   while [[ ${#*} -gt 0 ]]; do
     case ${1} in
-      -h | --help)
-        _showHelp "${helpTxt}" && exit 0
+    -h | --help)
+      _showHelp "${helpTxt}" && exit 0
       ;;
-      -c | --config)
-        bat -pp "${pathname}/env.sh" && exit 0
+    -c | --config)
+      bat -pp "${pathname}/env.sh" && exit 0
       ;;
-      *)
-        shift 
+    *)
+      shift
       ;;
     esac
   done
@@ -33,14 +33,14 @@ parseArgs () {
 # init
 parseArgs "${@}"
 
-# get input 
-[[ ${#*} -gt 0 ]] && 
+# get input
+[[ ${#*} -gt 0 ]] &&
   q="${@}" ||
   while [[ ${#q} -eq 0 ]]; do
     read -p "search: " q
   done
 
-runSearch () {
+runSearch() {
   gh search repos \
     --sort "stars" \
     --limit "${maxHeight}" \
@@ -49,17 +49,17 @@ runSearch () {
     "${@}"
 }
 
-[[ ${#q} -gt 0 ]] && 
+[[ ${#q} -gt 0 ]] &&
   declare -a searchResults="($(runSearch ${q}))"
 
-[[ ${#searchResults[@]} -eq 0 ]] && 
-  echo "no results" && 
+[[ ${#searchResults[@]} -eq 0 ]] &&
+  echo "no results" &&
   exit 1
 
 tempfile=$(mktemp)
 
 while true; do
-  selection="" 
+  selection=""
 
   _scrollableList "${searchResults[@]}" -o "${tempfile}" &&
     selection=$(cat "${tempfile}")
@@ -68,4 +68,3 @@ while true; do
     break ||
     gh repo view "${selection}" | ${pager}
 done
-

@@ -24,8 +24,7 @@ for i in "${!pathNames[@]}"; do
 done
 
 # echo "${treeJSON}" |
-# jq -r '.tree[] | .url' | 
-# sed 's/.*github.com\/*//' | 
-# xargs -n 1 gh api | 
+# jq -r '.tree[] | .url' |
+# sed 's/.*github.com\/*//' |
+# xargs -n 1 gh api |
 # jq -r '.content' | base64 -d |
-

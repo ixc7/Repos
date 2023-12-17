@@ -24,5 +24,3 @@ template="Results:
   + updated: {{(timefmt \"1/1/2006\" .updatedAt)}}
 {{end}}
 "
-
-
