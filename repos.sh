@@ -44,7 +44,7 @@ parseArgs "${@}"
 runSearch() {
   gh search repos \
     --sort "stars" \
-    --limit "${maxHeight}" \
+    --limit 100 \
     --json "${json}" \
     --jq '.[].fullName' \
     "${@}"

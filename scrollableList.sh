@@ -3,7 +3,7 @@
 _scrollableList() {
   declare -a items=()
   outfile=""
-  len=0
+  max=0
   pos=0
 
   mvUp() { echo -ne "\x1b[1A\r"; }
@@ -13,8 +13,8 @@ _scrollableList() {
     tput cup 0 0
   }
   mvBottom() {
-    pos=${len}
-    tput cup ${len} 0
+    pos=${max}
+    tput cup ${max} 0
   }
   printItem() { echo -ne "${items[pos]}\r"; }
   printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
@@ -49,11 +49,18 @@ _scrollableList() {
   trap trapSIGINT SIGINT
   tput smcup
 
-  # render list
-  len="$((${#items[@]} - 1))"
+  max="$((${#items[@]} - 1))"
+  maxLines=$(($(tput lines) - 1))
 
-  for i in "${items[@]}"; do
-    echo "${i}"
+  # limit range to screen height
+  if [[ ${max} -gt ${maxLines} ]]; then
+    max=${maxLines}
+  fi
+
+  # render list
+  for ((i = 0; i < ${max}; i += 1)); do
+    echo "${items[i]}"
+    # skipping last item on first render, needs `echo -n`
   done
 
   mvTop
@@ -71,6 +78,7 @@ _scrollableList() {
         ((pos -= 1))
         mvUp
       else
+        # loop back to bottom
         printItem
         mvBottom
       fi
@@ -79,11 +87,12 @@ _scrollableList() {
 
     # down
     "B")
-      if [[ pos -lt ${len} ]]; then
+      if [[ pos -lt ${max} ]]; then
         printItem
         ((pos += 1))
         mvDown
       else
+        # loop back to top
         printItem
         mvTop
       fi

@@ -5,7 +5,7 @@
 pager="bat -p -l md"
 
 # max results to fetch (limit 100)
-maxHeight=$(($(tput lines) - 1))
+# maxHeight=$(($(tput lines) - 1))
 
 # max text length before truncating
 maxWidth=$(($(tput cols) - 4))
@@ -15,12 +15,12 @@ json="fullName"
 
 # output template (--template "${template}")
 # see `gh help formatting`
-template="Results:
-{{range .}}
-{{hyperlink .url .fullName}}
-\"{{truncate (${maxWidth}) .description}}\" 
-  + {{.stargazersCount}} stars
-  + created: {{(timefmt \"1/1/2006\" .createdAt)}}
-  + updated: {{(timefmt \"1/1/2006\" .updatedAt)}}
-{{end}}
-"
+# template="Results:
+# {{range .}}
+# {{hyperlink .url .fullName}}
+# \"{{truncate (${maxWidth}) .description}}\" 
+#   + {{.stargazersCount}} stars
+#   + created: {{(timefmt \"1/1/2006\" .createdAt)}}
+#   + updated: {{(timefmt \"1/1/2006\" .updatedAt)}}
+# {{end}}
+# "
