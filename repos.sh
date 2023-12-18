@@ -12,6 +12,7 @@ helpTxt="
 
 source "${pathname}/env.sh"
 source "${pathname}/scrollableList.sh"
+source "${pathname}/previewFiles.sh"
 source "${pathname}/util.sh"
 
 parseArgs() {
@@ -64,7 +65,10 @@ while true; do
   _scrollableList "${searchResults[@]}" -o "${tempfile}" &&
     selection=$(cat "${tempfile}")
 
-  [[ "${#selection}" -eq 0 ]] &&
-    break ||
-    gh repo view "${selection}" | ${pager}
+  [[ "${#selection}" -eq 0 ]] && break
+
+  (
+    gh repo view "${selection}" | ${pager} # view README.md
+    _previewFiles "${selection}"           # view individual files
+  )
 done
