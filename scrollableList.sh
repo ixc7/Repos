@@ -114,7 +114,8 @@ _scrollableList() {
     # quit
     "q" | "Q")
       tput rmcup
-      exit 1
+      # exit 1
+      break
       ;;
     esac
   done

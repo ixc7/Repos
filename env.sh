@@ -18,7 +18,7 @@ json="fullName"
 # template="Results:
 # {{range .}}
 # {{hyperlink .url .fullName}}
-# \"{{truncate (${maxWidth}) .description}}\" 
+# \"{{truncate (${maxWidth}) .description}}\"
 #   + {{.stargazersCount}} stars
 #   + created: {{(timefmt \"1/1/2006\" .createdAt)}}
 #   + updated: {{(timefmt \"1/1/2006\" .updatedAt)}}

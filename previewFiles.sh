@@ -19,6 +19,7 @@ _previewFiles() {
 
   while true; do
     selection=""
+    echo "" >"${tempfile}"
 
     _scrollableList "${pathNames[@]}" -o "${tempfile}" &&
       selection=$(cat "${tempfile}")
@@ -31,6 +32,5 @@ _previewFiles() {
         gh api "${apiURL}" | jq -r '.content' | base64 -d | bat -p -l "${pathNames[i]##*.}"
       fi
     done
-
   done
 }

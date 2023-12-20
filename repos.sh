@@ -14,6 +14,7 @@ source "${pathname}/env.sh"
 source "${pathname}/scrollableList.sh"
 source "${pathname}/previewFiles.sh"
 source "${pathname}/util.sh"
+source "${pathname}/pagination.sh"
 
 parseArgs() {
   while [[ ${#*} -gt 0 ]]; do
@@ -59,16 +60,30 @@ runSearch() {
 
 tempfile=$(mktemp)
 
+# fzfSelect() {
+#   for i in "${searchResults[@]}"; do
+#     echo "${i}"
+#   done |
+#     fzf \
+#       --preview "gh repo view {} | bat -fpp -l md" \
+#       --preview-window=75% \
+#       --cycle
+# }
+
+# selection=$(fzfSelect)
+
 while true; do
   selection=""
-
-  _scrollableList "${searchResults[@]}" -o "${tempfile}" &&
+  # TODO: echo "" > "${tempfile}"
+  #       AFTER "new search" feature is implemented
+  _paginateArray "${searchResults[@]}" -o "${tempfile}" &&
+    # _scrollableList "${searchResults[@]}" -o "${tempfile}" &&
     selection=$(cat "${tempfile}")
 
   [[ "${#selection}" -eq 0 ]] && break
 
-  (
-    gh repo view "${selection}" | ${pager} # view README.md
-    _previewFiles "${selection}"           # view individual files
-  )
+  # (
+  gh repo view "${selection}" | glow # view README.md
+  _previewFiles "${selection}"       # view individual files
+  # )
 done
