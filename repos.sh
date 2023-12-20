@@ -7,11 +7,8 @@ helpTxt="
 
   options:
       -h, --help        show help
-      -c, --config      show config
 "
 
-source "${pathname}/env.sh"
-source "${pathname}/scrollableList.sh"
 source "${pathname}/previewFiles.sh"
 source "${pathname}/util.sh"
 source "${pathname}/pagination.sh"
@@ -22,9 +19,6 @@ parseArgs() {
     -h | --help)
       _showHelp "${helpTxt}" && exit 0
       ;;
-    -c | --config)
-      bat -pp "${pathname}/env.sh" && exit 0
-      ;;
     *)
       shift
       ;;
@@ -32,58 +26,53 @@ parseArgs() {
   done
 }
 
-# init
 parseArgs "${@}"
 
-# get input
-[[ ${#*} -gt 0 ]] &&
-  q="${@}" ||
-  while [[ ${#q} -eq 0 ]]; do
-    read -p "search: " q
-  done
+getQuery () {
+  [[ ${#*} -gt 0 ]] &&
+    Q="${@}" ||
+    while [[ ${#Q} -eq 0 ]]; do
+      read -p "search: " Q
+    done
+    echo "${Q}"
+}
 
 runSearch() {
+  # --json fullName,description,url,stargazersCount,createdAt,updatedAt,...
   gh search repos \
     --sort "stars" \
     --limit 100 \
-    --json "${json}" \
+    --json "fullName" \
     --jq '.[].fullName' \
     "${@}"
 }
 
-[[ ${#q} -gt 0 ]] &&
-  declare -a searchResults="($(runSearch ${q}))"
+_mainLoop () {
+  tempfile=$(mktemp)
+  q=$(getQuery "${@}")
 
-[[ ${#searchResults[@]} -eq 0 ]] &&
-  echo "no results" &&
-  exit 1
+  [[ ${#q} -gt 0 ]] &&
+    declare -a searchResults="($(runSearch ${q}))"
 
-tempfile=$(mktemp)
+  if [[ ${#searchResults[@]} -eq 0 ]]; then
+    echo "no results"
+    _mainLoop
+  fi
 
-# fzfSelect() {
-#   for i in "${searchResults[@]}"; do
-#     echo "${i}"
-#   done |
-#     fzf \
-#       --preview "gh repo view {} | bat -fpp -l md" \
-#       --preview-window=75% \
-#       --cycle
-# }
+  while true; do
+    selection=""
 
-# selection=$(fzfSelect)
+    _paginateArray "${searchResults[@]}" -o "${tempfile}" &&
+      selection=$(cat "${tempfile}")
 
-while true; do
-  selection=""
-  # TODO: echo "" > "${tempfile}"
-  #       AFTER "new search" feature is implemented
-  _paginateArray "${searchResults[@]}" -o "${tempfile}" &&
-    # _scrollableList "${searchResults[@]}" -o "${tempfile}" &&
-    selection=$(cat "${tempfile}")
+    if [[ "${#selection}" -gt 0 ]]; then
+      gh repo view "${selection}" | glow # view README.md
+      _previewFiles "${selection}"       # view individual files
+    else
+      _mainLoop
+    fi
+  done
+}
 
-  [[ "${#selection}" -eq 0 ]] && break
+_mainLoop "${@}"
 
-  # (
-  gh repo view "${selection}" | glow # view README.md
-  _previewFiles "${selection}"       # view individual files
-  # )
-done
