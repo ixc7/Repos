@@ -44,7 +44,8 @@ _scrollableList() {
   _parseArgs "${@}"
 
   [[ ${#items[@]} -eq 0 ]] &&
-    exit 1
+    return 1
+  # exit 1
 
   trap _trapSIGINT SIGINT
   tput smcup
@@ -114,8 +115,9 @@ _scrollableList() {
     # quit
     "q" | "Q")
       tput rmcup
+      return 1
       # exit 1
-      break
+      # break
       ;;
     esac
   done

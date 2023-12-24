@@ -9,17 +9,26 @@ _previewFiles() {
   [[ ${#*} -eq 0 ]] && exit 1
 
   repoName="${@}"
-  branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch') # "main"
+  branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch') # "main":
   treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true")
 
-  declare -a pathNames="($(echo "${treeJSON}" | jq '.tree[] | if .type == "blob" then .path else empty end'))"
-  declare -a urlNames="($(echo "${treeJSON}" | jq '.tree[] | if .type == "blob" then .url else empty end'))"
+  declare -a pathNames="($(
+    echo "${treeJSON}" |
+      jq '.tree[] | if .type == "blob" then .path else empty end' 2>/dev/null
+  ))"
+  declare -a urlNames="($(
+    echo "${treeJSON}" |
+      jq '.tree[]? | if .type == "blob" then .url else empty end' 2>/dev/null
+  ))"
+
+  # repo is empty
+  [[ ${#pathNames[@]} -eq 0 ]] &&
+    return 1
 
   tempfile=$(mktemp)
 
   while true; do
     selection=""
-    echo "" >"${tempfile}"
 
     _scrollableList "${pathNames[@]}" -o "${tempfile}" &&
       selection=$(cat "${tempfile}")
