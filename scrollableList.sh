@@ -6,25 +6,25 @@ _scrollableList() {
   max=0
   pos=0
 
-  mvUp() { echo -ne "\x1b[1A\r"; }
-  mvDown() { echo -ne "\x1b[1B\r"; }
-  mvTop() {
+  _mvUp() { echo -ne "\x1b[1A\r"; }
+  _mvDown() { echo -ne "\x1b[1B\r"; }
+  _mvTop() {
     pos=0
     tput cup 0 0
   }
-  mvBottom() {
+  _mvBottom() {
     pos=${max}
     tput cup ${max} 0
   }
-  printItem() { echo -ne "${items[pos]}\r"; }
-  printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
+  _printItem() { echo -ne "${items[pos]}\r"; }
+  _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
 
-  trapSIGINT() {
+  _trapSIGINT() {
     tput rmcup
     exit 1
   }
 
-  parseArgs() {
+  _parseArgs() {
     while [[ ${#*} -gt 0 ]]; do
       case ${1} in
       -o | --outfile)
@@ -41,12 +41,12 @@ _scrollableList() {
   }
 
   # init
-  parseArgs "${@}"
+  _parseArgs "${@}"
 
   [[ ${#items[@]} -eq 0 ]] &&
     exit 1
 
-  trap trapSIGINT SIGINT
+  trap _trapSIGINT SIGINT
   tput smcup
 
   max="$((${#items[@]} - 1))"
@@ -63,8 +63,8 @@ _scrollableList() {
     # skipping last item on first render, needs `echo -n`
   done
 
-  mvTop
-  printItemBold
+  _mvTop
+  _printItemBold
 
   # read every keystroke
   while true; do
@@ -74,36 +74,36 @@ _scrollableList() {
     # up
     "A")
       if [[ pos -gt 0 ]]; then
-        printItem
+        _printItem
         ((pos -= 1))
-        mvUp
+        _mvUp
       else
         # loop back to bottom
-        printItem
-        mvBottom
+        _printItem
+        _mvBottom
       fi
-      printItemBold
+      _printItemBold
       ;;
 
     # down
     "B")
       if [[ pos -lt ${max} ]]; then
-        printItem
+        _printItem
         ((pos += 1))
-        mvDown
+        _mvDown
       else
         # loop back to top
-        printItem
-        mvTop
+        _printItem
+        _mvTop
       fi
-      printItemBold
+      _printItemBold
       ;;
 
     # enter
     "")
       tput rmcup
       if [[ ${#outfile} -eq 0 ]]; then
-        printItem
+        _printItem
         echo
       else
         echo "${items[pos]}" >"${outfile}"

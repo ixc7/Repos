@@ -2,8 +2,6 @@
 
 source "$(dirname ${0})/scrollableList.sh"
 
-# tempfile=$(mktemp)
-
 _paginateArray() {
   declare -a items="("${@}")"
   declare -a pages=()
@@ -11,10 +9,7 @@ _paginateArray() {
   pageCount=0
   outfile=""
 
-  # ns
-  # echo -e "original:\n${items[@]}\n${#items[@]} items\n"
-
-  parseArgs() {
+  _parseArgs() {
     while [[ ${#*} -gt 0 ]]; do
       case ${1} in
       -o | --outfile)
@@ -30,8 +25,7 @@ _paginateArray() {
     done
   }
 
-  # init
-  parseArgs "${@}"
+  _parseArgs "${@}"
 
   while true; do
     if [[ ${#items[@]} -eq 0 ]]; then
@@ -45,16 +39,13 @@ _paginateArray() {
 
   for i in "${!pages[@]}"; do
     declare -a temp="(${pages[i]})"
-    # echo -e "page $((i + 1))/${#pages[@]}:\n${temp[@]}\n${#temp[@]} items\n"
 
     _scrollableList "${temp[@]}" -o "${outfile}" &&
       selection="$(cat ${outfile})"
 
     [[ ${#selection} -gt 0 ]] &&
-      # echo "YOU SELECTED ${selection}" &&
       break
   done
-
 }
 
 # _paginateArray "$(seq 300)" -o "${tempfile}"
