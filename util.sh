@@ -1,11 +1,11 @@
 #!/usr/local/bin/bash
 
 _getInput() {
-  [[ ${#*} -gt 0 ]] &&
-    q="${@}" ||
-    while [[ ${#q} -eq 0 ]]; do
-      read -p "search: " q
-    done
+  # [[ "${#@}" -gt 0 ]] &&
+  q="${@}" # ||
+  while [[ ${#q} -eq 0 ]]; do
+    read -p "search: " q
+  done
 
   echo "${q}"
 }

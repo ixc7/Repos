@@ -14,15 +14,14 @@ _mainLoop() {
   q=$(_getInput "${@}")
 
   [[ ${#q} -gt 0 ]] &&
-    declare -a searchResults="($(_ghSearchRepos ${q}))"
+    declare -a searchResults="($(_ghSearchRepos ${q}))" &&
+    echo "GOT searchResults: ${#searchResults[@]}"
 
   [[ ${#searchResults[@]} -eq 0 ]] &&
     echo "no results" &&
     _mainLoop
 
   while true; do
-    selection=""
-
     _paginateArray "${searchResults[@]}" -o "${tempfile}" &&
       selection=$(cat "${tempfile}")
 
