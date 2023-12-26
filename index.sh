@@ -5,7 +5,7 @@ pathname="$(dirname ${0})"
 source "${pathname}/help.sh"
 source "${pathname}/util.sh"
 source "${pathname}/previewFiles.sh"
-source "${pathname}/pagination.sh"
+source "${pathname}/paginatedList.sh"
 
 _parseHelpArgs "${@}"
 
@@ -21,7 +21,7 @@ _mainLoop() {
     _mainLoop
 
   while true; do
-    _paginateArray "${searchResults[@]}" -o "${tempfile}" &&
+    _paginatedList "${searchResults[@]}" -o "${tempfile}" &&
       selection=$(cat "${tempfile}")
 
     if [[ "${#selection}" -gt 0 ]]; then

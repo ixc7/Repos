@@ -9,12 +9,13 @@ _previewFiles() {
   [[ ${#*} -eq 0 ]] && exit 1
 
   repoName="${@}"
-  branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch') # "main":
+  tempfile=$(mktemp)
+  branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch')
   treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true")
 
   declare -a pathNames="($(
     echo "${treeJSON}" |
-      jq '.tree[] | if .type == "blob" then .path else empty end' 2>/dev/null
+      jq '.tree[]? | if .type == "blob" then .path else empty end' 2>/dev/null
   ))"
   declare -a urlNames="($(
     echo "${treeJSON}" |
@@ -25,8 +26,6 @@ _previewFiles() {
   [[ ${#pathNames[@]} -eq 0 ]] &&
     return 1
 
-  tempfile=$(mktemp)
-
   while true; do
     selection=""
 
@@ -35,10 +34,16 @@ _previewFiles() {
 
     [[ "${#selection}" -eq 0 ]] && break
 
+    # match selected path to corresponding url
     for i in "${!pathNames[@]}"; do
       if [[ "${pathNames[i]}" == "${selection}" ]]; then
         apiURL=$(echo "${urlNames[i]}" | sed 's/.*github.com\/*//')
-        gh api "${apiURL}" | jq -r '.content' | base64 -d | bat -p -l "${pathNames[i]##*.}"
+        filename="/tmp/$(echo -n ${pathNames[i]} | tr '/' '_')"
+
+        # decode file contents
+        gh api "${apiURL}" | jq -r '.content' | base64 -d >"${filename}" &&
+          # open in editor
+          ${EDITOR} "${filename}"
       fi
     done
   done

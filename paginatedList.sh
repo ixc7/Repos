@@ -2,7 +2,7 @@
 
 source "$(dirname ${0})/scrollableList.sh"
 
-_paginateArray() {
+_paginatedList() {
   declare -a items="("${@}")"
   declare -a pages=()
   max=$(tput lines) # decrease by 1?
@@ -47,6 +47,3 @@ _paginateArray() {
       break
   done
 }
-
-# _paginateArray "$(seq 300)" -o "${tempfile}"
-# _paginateArray "*"

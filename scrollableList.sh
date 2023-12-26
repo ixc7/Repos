@@ -7,16 +7,21 @@ _scrollableList() {
   pos=0
 
   _mvUp() { echo -ne "\x1b[1A\r"; }
+
   _mvDown() { echo -ne "\x1b[1B\r"; }
+
   _mvTop() {
     pos=0
     tput cup 0 0
   }
+
   _mvBottom() {
     pos=${max}
     tput cup ${max} 0
   }
+
   _printItem() { echo -ne "${items[pos]}\r"; }
+
   _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
 
   _trapSIGINT() {
@@ -40,12 +45,10 @@ _scrollableList() {
     done
   }
 
-  # init
   _parseArgs "${@}"
 
   [[ ${#items[@]} -eq 0 ]] &&
     return 1
-  # exit 1
 
   trap _trapSIGINT SIGINT
   tput smcup
@@ -54,9 +57,8 @@ _scrollableList() {
   maxLines=$(($(tput lines) - 1))
 
   # limit range to screen height
-  if [[ ${max} -gt ${maxLines} ]]; then
+  [[ ${max} -gt ${maxLines} ]] &&
     max=${maxLines}
-  fi
 
   # render list
   for ((i = 0; i < ${max}; i += 1)); do
@@ -79,7 +81,7 @@ _scrollableList() {
         ((pos -= 1))
         _mvUp
       else
-        # loop back to bottom
+        # loop to bottom
         _printItem
         _mvBottom
       fi
@@ -93,7 +95,7 @@ _scrollableList() {
         ((pos += 1))
         _mvDown
       else
-        # loop back to top
+        # loop to top
         _printItem
         _mvTop
       fi
@@ -116,8 +118,6 @@ _scrollableList() {
     "q" | "Q")
       tput rmcup
       return 1
-      # exit 1
-      # break
       ;;
     esac
   done
