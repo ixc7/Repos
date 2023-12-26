@@ -3,7 +3,7 @@
 # https://docs.github.com/en/rest/repos/contents
 # https://docs.github.com/en/rest/git/trees
 
-source "$(dirname ${0})/scrollableList.sh"
+source "$(dirname ${0})/paginatedList.sh"
 
 _previewFiles() {
   [[ ${#*} -eq 0 ]] && exit 1
@@ -29,7 +29,7 @@ _previewFiles() {
   while true; do
     selection=""
 
-    _scrollableList "${pathNames[@]}" -o "${tempfile}" &&
+    _paginatedList "${pathNames[@]}" -o "${tempfile}" &&
       selection=$(cat "${tempfile}")
 
     [[ "${#selection}" -eq 0 ]] && break
