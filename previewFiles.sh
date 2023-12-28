@@ -6,10 +6,11 @@
 source "$(dirname ${0})/paginatedList.sh"
 
 _previewFiles() {
-  [[ ${#*} -eq 0 ]] && exit 1
+  [[ ${#*} -eq 0 ]] && return 1
 
   repoName="${@}"
   tempfile=$(mktemp)
+
   branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch')
   treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true")
 
@@ -17,6 +18,7 @@ _previewFiles() {
     echo "${treeJSON}" |
       jq '.tree[]? | if .type == "blob" then .path else empty end' 2>/dev/null
   ))"
+
   declare -a urlNames="($(
     echo "${treeJSON}" |
       jq '.tree[]? | if .type == "blob" then .url else empty end' 2>/dev/null

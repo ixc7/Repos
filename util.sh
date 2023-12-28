@@ -19,3 +19,7 @@ _ghSearchRepos() {
     --jq '.[].fullName' \
     "${@}"
 }
+
+_ghViewReadme() {
+  gh repo view "${@}" | glow -p
+}
