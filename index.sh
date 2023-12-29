@@ -1,6 +1,6 @@
 #!/usr/local/bin/bash
 
-pathname="$(dirname ${0})"
+pathname="$(dirname "${0}")"
 
 source "${pathname}/help.sh"
 source "${pathname}/util.sh"
@@ -14,7 +14,7 @@ _mainLoop() {
   q=$(_getInput "${@}")
 
   [[ ${#q} -gt 0 ]] &&
-    declare -a searchResults="($(_ghSearchRepos ${q}))"
+    declare -a searchResults="($(_ghSearchRepos "${q}"))"
 
   [[ ${#searchResults[@]} -eq 0 ]] &&
     echo "no results" &&

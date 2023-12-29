@@ -1,10 +1,10 @@
 #!/usr/local/bin/bash
 
 _getInput() {
-  q="${@}"
+  q="${*}"
 
   while [[ ${#q} -eq 0 ]]; do
-    read -p "search: " q
+    read -rp "search: " q
   done
 
   echo "${q}"

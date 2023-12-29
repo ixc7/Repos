@@ -1,7 +1,7 @@
 #!/usr/local/bin/bash
 
 helpTxt="
-  usage: $(basename ${0}) -h [QUERY...] 
+  usage: $(basename "${0}") -h [QUERY...] 
 
   options:
       -h, --help        show help
@@ -10,13 +10,13 @@ helpTxt="
 _unindent() {
   [[ ${#*} -eq 0 ]] && return 1
 
-  local msg="${@}"
+  local msg="${*}"
   local indent=false
 
   _printLine() {
     while IFS= read -r line; do
       # line with spaces removed
-      local noSpaces=$(echo "${line}" | sed 's/ //g')
+      noSpaces="${line/ //}"
 
       # skip empty lines
       if [[ ${#noSpaces} -eq 0 ]]; then
@@ -32,14 +32,14 @@ _unindent() {
           )
         fi
         # print formatted line
-        echo "${line}" | cut -c "$(($indent + 1))"-"${#line}"
+        echo "${line}" | cut -c "$((indent + 1))-${#line}"
       fi
     done < <(echo "${msg}") # pass text to IFS loop
   }
 
-  echo "$(
-    _printLine
-  )"
+  # echo "$(
+  _printLine
+  # )"
 }
 
 _showHelp() {

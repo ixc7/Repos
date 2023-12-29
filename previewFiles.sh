@@ -3,12 +3,12 @@
 # https://docs.github.com/en/rest/repos/contents
 # https://docs.github.com/en/rest/git/trees
 
-source "$(dirname ${0})/paginatedList.sh"
+source "$(dirname "${0}")/paginatedList.sh"
 
 _previewFiles() {
   [[ ${#*} -eq 0 ]] && return 1
 
-  repoName="${@}"
+  repoName="${*}"
   tempfile=$(mktemp)
 
   branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch')
@@ -40,7 +40,7 @@ _previewFiles() {
     for i in "${!pathNames[@]}"; do
       if [[ "${pathNames[i]}" == "${selection}" ]]; then
         apiURL=$(echo "${urlNames[i]}" | sed 's/.*github.com\/*//')
-        filename="/tmp/$(echo -n ${pathNames[i]} | tr '/' '_')"
+        filename="/tmp/$(echo -n "${pathNames[i]}" | tr '/' '_')"
 
         # decode file contents
         gh api "${apiURL}" | jq -r '.content' | base64 -d >"${filename}" &&

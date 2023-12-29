@@ -61,7 +61,7 @@ _scrollableList() {
     max=${maxLines}
 
   # render list
-  for ((i = 0; i < ${max}; i += 1)); do
+  for ((i = 0; i < max; i += 1)); do
     echo "${items[i]}"
     # skipping last item on first render, needs `echo -n`
   done
