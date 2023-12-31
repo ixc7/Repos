@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env bash
 
 source "$(dirname "${0}")/scrollableList.sh"
 

@@ -1,10 +1,10 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env bash
 
 _getInput() {
   q="${*}"
 
   while [[ ${#q} -eq 0 ]]; do
-    read -rp "search: " q
+    read -erp "search: " q
   done
 
   echo "${q}"

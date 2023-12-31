@@ -1,4 +1,4 @@
-#!/usr/local/bin/bash
+#!/usr/bin/env bash
 
 helpTxt="
   usage: $(basename "${0}") -h [QUERY...] 
