@@ -2,12 +2,23 @@
 
 pathname="$(dirname "${0}")"
 
-source "${pathname}/help.sh"
 source "${pathname}/util.sh"
 source "${pathname}/previewFiles.sh"
 source "${pathname}/paginatedList.sh"
 
-_parseHelpArgs "${@}"
+_parseArgs() {
+  while [[ ${#*} -gt 0 ]]; do
+    case ${1} in
+    -h | --help)
+      _showHelp
+      exit 0
+      ;;
+    *)
+      shift
+      ;;
+    esac
+  done
+}
 
 _mainLoop() {
   tempfile=$(mktemp)
@@ -34,4 +45,5 @@ _mainLoop() {
   done
 }
 
+_parseArgs "${@}"
 _mainLoop "${@}"

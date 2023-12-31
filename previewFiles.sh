@@ -31,7 +31,7 @@ _previewFiles() {
 
     [[ "${#selection}" -eq 0 ]] && break
 
-        echo "got $selection"
+    echo "got $selection"
     # match selected path to corresponding url
     for i in "${!pathNames[@]}"; do
       if [[ "${pathNames[i]}" == "${selection}" ]]; then

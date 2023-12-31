@@ -23,3 +23,35 @@ _ghSearchRepos() {
 _ghViewReadme() {
   gh repo view "${@}" | glow -p
 }
+
+_showHelp() {
+  helpText="
+    usage: $(basename "${0}") -h [QUERY...] 
+
+    options:
+        -h, --help        show help
+  "
+
+  # unindenting the help message below
+  # ...
+  # so i don't have to write it ugly above
+
+  indent=false
+
+  while IFS="" read -r line; do
+    # ignore empty lines
+    charsOnly="${line/ //}"
+    if [[ ${#charsOnly} -eq 0 ]]; then
+      echo
+    else
+      # set indent to first non empty line
+      if [[ ${indent} == false ]]; then
+        indent=$(
+          echo "${line}" | awk -F'[^ ]' '{print length($1)}' # get number of leading spaces
+        )
+      fi
+      # formatted
+      echo "${line}" | cut -c "$((indent + 1))-"
+    fi
+  done < <(echo "${helpText}") | bat -pp -l help
+}
