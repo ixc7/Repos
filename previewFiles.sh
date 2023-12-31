@@ -27,7 +27,7 @@ _previewFiles() {
     selection=""
 
     _paginatedList "${pathNames[@]}" -o "${tempfile}" &&
-      selection=$(cat "${tempfile}")
+      selection=$(cat "${tempfile}" | tr '\\' ' ')
 
     [[ "${#selection}" -eq 0 ]] && break
 

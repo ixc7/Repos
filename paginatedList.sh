@@ -3,7 +3,7 @@
 source "$(dirname "${0}")/scrollableList.sh"
 
 _paginatedList() {
-  declare -a items=("${*}")
+  declare -a items=()
   declare -a pages=()
   max=$(tput lines) # decrease by 1?
   pageCount=0
@@ -18,7 +18,7 @@ _paginatedList() {
         shift
         ;;
       *)
-        items+=("${1}")
+        items+=($(echo "${1}" | tr ' ' '\\'))
         shift
         ;;
       esac
@@ -40,6 +40,7 @@ _paginatedList() {
   for i in "${!pages[@]}"; do
     declare -a temp=(${pages[i]})
 
+    # _scrollableList ${items[*]:0:${max}} -o "${outfile}" &&
     _scrollableList "${temp[@]}" -o "${outfile}" &&
       selection="$(cat "${outfile}")"
 
