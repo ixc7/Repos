@@ -1,24 +1,10 @@
 #!/usr/bin/env bash
 
-pathname="$(dirname "${0}")"
+selfdir="$(dirname "${0}")"
 
-source "${pathname}/util.sh"
-source "${pathname}/previewFiles.sh"
-source "${pathname}/paginatedList.sh"
-
-_parseArgs() {
-  while [[ ${#*} -gt 0 ]]; do
-    case ${1} in
-    -h | --help)
-      _showHelp
-      exit 0
-      ;;
-    *)
-      shift
-      ;;
-    esac
-  done
-}
+source "${selfdir}/paginatedList.sh"
+source "${selfdir}/previewFiles.sh"
+source "${selfdir}/util.sh"
 
 _mainLoop() {
   tempfile=$(mktemp)

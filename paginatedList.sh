@@ -18,7 +18,7 @@ _paginatedList() {
         shift
         ;;
       *)
-        items+=($(echo "${1}" | tr ' ' '\\'))
+        items+=($(echo "${1}" | tr ' ' '\\')) # escape spaces
         shift
         ;;
       esac
@@ -38,10 +38,9 @@ _paginatedList() {
   done
 
   for i in "${!pages[@]}"; do
-    declare -a temp=(${pages[i]})
+    declare -a currentPage=(${pages[i]})
 
-    # _scrollableList ${items[*]:0:${max}} -o "${outfile}" &&
-    _scrollableList "${temp[@]}" -o "${outfile}" &&
+    _scrollableList "${currentPage[@]}" -o "${outfile}" &&
       selection="$(cat "${outfile}")"
 
     [[ ${#selection} -gt 0 ]] &&

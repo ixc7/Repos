@@ -1,5 +1,50 @@
 #!/usr/bin/env bash
 
+_showHelp() {
+  indent=false
+  helpText="
+    usage: $(basename "${0}") -h [QUERY...] 
+
+    options:
+        -h, --help        show help
+  "
+
+  # unindenting the message below,
+  # so i don't have to format it above
+
+  while IFS="" read -r line; do
+    # ignore blank lines
+    charsOnly="${line/ //}"
+    if [[ ${#charsOnly} -eq 0 ]]; then
+      echo
+    else
+      # set indent to first non empty line
+      if [[ ${indent} == false ]]; then
+        indent=$(
+          # get number of leading spaces
+          echo "${line}" | awk -F'[^ ]' '{print length($1)}'
+        )
+      fi
+      # formatted
+      echo "${line}" | cut -c "$((indent + 1))-"
+    fi
+  done < <(echo "${helpText}") | bat -pp -l help
+}
+
+_parseArgs() {
+  while [[ ${#*} -gt 0 ]]; do
+    case ${1} in
+    -h | --help)
+      _showHelp
+      exit 0
+      ;;
+    *)
+      shift
+      ;;
+    esac
+  done
+}
+
 _getInput() {
   q="${*}"
 
@@ -10,7 +55,6 @@ _getInput() {
   echo "${q}"
 }
 
-# --json fullName,description,url,stargazersCount,createdAt,updatedAt,...
 _ghSearchRepos() {
   gh search repos \
     --sort "stars" \
@@ -22,36 +66,4 @@ _ghSearchRepos() {
 
 _ghViewReadme() {
   gh repo view "${@}" | glow -p
-}
-
-_showHelp() {
-  helpText="
-    usage: $(basename "${0}") -h [QUERY...] 
-
-    options:
-        -h, --help        show help
-  "
-
-  # unindenting the help message below
-  # ...
-  # so i don't have to write it ugly above
-
-  indent=false
-
-  while IFS="" read -r line; do
-    # ignore empty lines
-    charsOnly="${line/ //}"
-    if [[ ${#charsOnly} -eq 0 ]]; then
-      echo
-    else
-      # set indent to first non empty line
-      if [[ ${indent} == false ]]; then
-        indent=$(
-          echo "${line}" | awk -F'[^ ]' '{print length($1)}' # get number of leading spaces
-        )
-      fi
-      # formatted
-      echo "${line}" | cut -c "$((indent + 1))-"
-    fi
-  done < <(echo "${helpText}") | bat -pp -l help
 }

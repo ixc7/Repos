@@ -6,18 +6,15 @@
 source "$(dirname "${0}")/paginatedList.sh"
 
 _previewFiles() {
-  [[ ${#*} -eq 0 ]] && return 1
-
-  tempfile=$(mktemp)
-
   repoName="${*}"
   branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch')
-  treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true")
-  URLsJSON=$(echo "${treeJSON}" | jq '.tree[]? | if .type == "blob" then .url else empty end' 2>/dev/null)
-  pathsJSON=$(echo "${treeJSON}" | jq '.tree[]? | if .type == "blob" then .path else empty end' 2>/dev/null)
+  treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true") # TODO: dirs
+  urlJSON=$(echo "${treeJSON}" | jq '.tree[]? | if .type == "blob" then .url else empty end' 2>/dev/null)
+  pathJSON=$(echo "${treeJSON}" | jq '.tree[]? | if .type == "blob" then .path else empty end' 2>/dev/null)
+  outfile=$(mktemp)
 
-  declare -a pathNames="(${pathsJSON})"
-  declare -a urlNames="(${URLsJSON})"
+  declare -a pathNames="(${pathJSON})"
+  declare -a urlNames="(${urlJSON})"
 
   # repo is empty
   [[ ${#pathNames[@]} -eq 0 ]] &&
@@ -26,21 +23,20 @@ _previewFiles() {
   while true; do
     selection=""
 
-    _paginatedList "${pathNames[@]}" -o "${tempfile}" &&
-      selection=$(cat "${tempfile}" | tr '\\' ' ')
+    _paginatedList "${pathNames[@]}" -o "${outfile}" &&
+      selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
 
     [[ "${#selection}" -eq 0 ]] && break
 
-    echo "got $selection"
     # match selected path to corresponding url
     for i in "${!pathNames[@]}"; do
       if [[ "${pathNames[i]}" == "${selection}" ]]; then
-        apiURL=$(echo "${urlNames[i]}" | sed 's/.*github.com\/*//')
-        filename="/tmp/$(echo -n "${pathNames[i]}" | tr '/' '_')"
+        fileUrl=$(echo "${urlNames[i]}" | sed 's/.*github.com\/*//')
+        tempfile="/tmp/$(echo -n "${pathNames[i]}" | tr '/' '_')"
 
         # decode file contents and open in editor
-        gh api "${apiURL}" | jq -r '.content' | base64 -d >"${filename}" &&
-          ${EDITOR} "${filename}"
+        gh api "${fileUrl}" | jq -r '.content' | base64 -d >"${tempfile}" &&
+          ${EDITOR} "${tempfile}"
       fi
     done
   done

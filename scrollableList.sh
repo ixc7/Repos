@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 
 _scrollableList() {
+  trap "tput rmcup; exit 1" SIGINT
+
   declare -a items=()
   outfile=""
   max=0
@@ -24,11 +26,6 @@ _scrollableList() {
 
   _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
 
-  _trapSIGINT() {
-    tput rmcup
-    exit 1
-  }
-
   _parseArgs() {
     while [[ ${#*} -gt 0 ]]; do
       case ${1} in
@@ -50,9 +47,6 @@ _scrollableList() {
   [[ ${#items[@]} -eq 0 ]] &&
     return 1
 
-  trap _trapSIGINT SIGINT
-  tput smcup
-
   max="$((${#items[@]} - 1))"
   maxLines=$(($(tput lines) - 1))
 
@@ -61,6 +55,8 @@ _scrollableList() {
     max=${maxLines}
 
   # render list
+  tput smcup
+
   for ((i = 0; i < max; i += 1)); do
     echo "${items[i]}"
     # skipping last item on first render, needs `echo -n`
