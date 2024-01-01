@@ -55,7 +55,7 @@ _getInput() {
   echo "${q}"
 }
 
-_ghSearchRepos() {
+_searchRepos() {
   gh search repos \
     --sort "stars" \
     --limit 100 \
@@ -64,6 +64,6 @@ _ghSearchRepos() {
     "${@}"
 }
 
-_ghViewReadme() {
+_viewReadme() {
   gh repo view "${@}" | glow -p
 }

@@ -3,10 +3,7 @@
 # https://docs.github.com/en/rest/repos/contents
 # https://docs.github.com/en/rest/git/trees
 
-# single page
-_scrollableList() {
-  trap "tput rmcup; exit 1" SIGINT
-
+_singlePage() {
   declare -a items=()
   outfile=""
   max=0
@@ -22,8 +19,10 @@ _scrollableList() {
     pos=${max}
     tput cup ${max} 0
   }
+
   _printItem() { echo -ne "${items[pos]}\r"; }
   _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
+
   _parseArgs() {
     while [[ ${#*} -gt 0 ]]; do
       case ${1} in
@@ -53,10 +52,10 @@ _scrollableList() {
     max=${maxLines}
 
   # render list
+  trap "tput rmcup; exit 1" SIGINT
   tput smcup
   for ((i = 0; i < max; i += 1)); do
-    echo "${items[i]}"
-    # skipping last item on first render, needs `echo -n`
+    echo "${items[i]}" # skipping last item on first render, needs `echo -n`
   done
   _mvTop
   _printItemBold
@@ -106,8 +105,7 @@ _scrollableList() {
   done
 }
 
-# multiple pages
-_paginatedList() {
+_multiplePages() {
   declare -a items=()
   declare -a pages=()
   max=$(tput lines) # decrease by 1?
@@ -123,7 +121,7 @@ _paginatedList() {
         shift
         ;;
       *)
-        items+=($(echo "${1}" | tr ' ' '\\')) # escape spaces
+      items+=($( echo "${1}" | tr ' ' '\\')) # escape spaces
         shift
         ;;
       esac
@@ -133,34 +131,34 @@ _paginatedList() {
   _parseArgs "${@}"
 
   while true; do
-    if [[ ${#items[@]} -eq 0 ]]; then
+    [[ ${#items[@]} -eq 0 ]] &&
       break
-    else
+
       pages[pageCount]="${items[*]:0:${max}}"
       pageCount=$((pageCount + 1))
       items=(${items[@]:${max}})
-    fi
   done
 
   for i in "${!pages[@]}"; do
     declare -a currentPage=(${pages[i]})
-    _scrollableList "${currentPage[@]}" -o "${outfile}" &&
+
+    _singlePage "${currentPage[@]}" -o "${outfile}" &&
       selection="$(cat "${outfile}")"
+    
     [[ ${#selection} -gt 0 ]] &&
       break
   done
 }
 
-# view filetree
-_previewFiles() {
+_viewFileTree() {
+  outfile=$(mktemp)
   repoName="${*}"
   branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch')
   treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true") # TODO: dirs
   urlJSON=$(echo "${treeJSON}" | jq '.tree[]? | if .type == "blob" then .url else empty end' 2>/dev/null)
   pathJSON=$(echo "${treeJSON}" | jq '.tree[]? | if .type == "blob" then .path else empty end' 2>/dev/null)
-  outfile=$(mktemp)
-  declare -a pathNames="(${pathJSON})"
   declare -a urlNames="(${urlJSON})"
+  declare -a pathNames="(${pathJSON})"
 
   # repo is empty
   [[ ${#pathNames[@]} -eq 0 ]] &&
@@ -168,7 +166,7 @@ _previewFiles() {
 
   while true; do
     selection=""
-    _paginatedList "${pathNames[@]}" -o "${outfile}" &&
+    _multiplePages "${pathNames[@]}" -o "${outfile}" &&
       selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
 
     [[ "${#selection}" -eq 0 ]] && break
