@@ -4,6 +4,8 @@
 # https://docs.github.com/en/rest/git/trees
 
 _singlePage() {
+  trap "tput rmcup" RETURN
+
   declare -a items=()
   outfile=""
   max=0
@@ -63,9 +65,8 @@ _singlePage() {
   # read every keystroke
   while true; do
     read -rsn1 keypress
-
     case "${keypress}" in
-    "A") # up
+    "A") # up or left
       if [[ pos -gt 0 ]]; then
         _printItem
         ((pos -= 1))
@@ -87,8 +88,16 @@ _singlePage() {
       fi
       _printItemBold
       ;;
-    "")
-      tput rmcup # enter
+    "C") # right
+      echo "NEXT_PAGE" >"${outfile}"
+      break
+      ;;
+    "D") # left
+      echo "PREV_PAGE" >"${outfile}"
+      break
+      ;;
+    "") # enter
+      # tput rmcup
       if [[ ${#outfile} -eq 0 ]]; then
         _printItem
         echo
@@ -97,8 +106,8 @@ _singlePage() {
       fi
       break
       ;;
-    "q" | "Q") # quit
-      tput rmcup
+    "q" | "Q" | "$'\e'") # q or ESC key: quit
+      # tput rmcup
       return 1
       ;;
     esac
@@ -121,7 +130,7 @@ _multiplePages() {
         shift
         ;;
       *)
-      items+=($( echo "${1}" | tr ' ' '\\')) # escape spaces
+        items+=($(echo "${1}" | tr ' ' '\\')) # escape spaces
         shift
         ;;
       esac
@@ -134,19 +143,35 @@ _multiplePages() {
     [[ ${#items[@]} -eq 0 ]] &&
       break
 
-      pages[pageCount]="${items[*]:0:${max}}"
-      pageCount=$((pageCount + 1))
-      items=(${items[@]:${max}})
+    pages[pageCount]="${items[*]:0:${max}}"
+    pageCount=$((pageCount + 1))
+    items=(${items[@]:${max}})
   done
 
-  for i in "${!pages[@]}"; do
-    declare -a currentPage=(${pages[i]})
+  # for i in "${!pages[@]}"; do
+  index=0
+  while true; do
+    # declare -a currentPage=(${pages[i]})
+    declare -a currentPage=(${pages[index]})
 
     _singlePage "${currentPage[@]}" -o "${outfile}" &&
-      selection="$(cat "${outfile}")"
-    
-    [[ ${#selection} -gt 0 ]] &&
+      selection="$(cat "${outfile}")" || selection=""
+
+    # if [[ ${#selection} -gt 0 ]]; then
+    if [[ ${selection} == "NEXT_PAGE" ]]; then
+      echo "" >${outfile}
+      tempCurrent=(${pages[$((index + 1))]})
+      [[ ${#tempCurrent[@]} -gt 0 ]] && index=$((index + 1))
+    elif [[ ${selection} == "PREV_PAGE" ]]; then
+      echo "" >${outfile}
+      tempIndex=$((index - 1))
+      [[ ${tempIndex} -ge 0 ]] &&
+        tempCurrent=(${pages[$((index - 1))]}) &&
+        [[ ${#tempCurrent[@]} -gt 0 ]] && index=$((index - 1))
+    else
       break
+    fi
+    # fi
   done
 }
 
@@ -165,7 +190,9 @@ _viewFileTree() {
     return 1
 
   while true; do
+    echo "" >${outfile}
     selection=""
+
     _multiplePages "${pathNames[@]}" -o "${outfile}" &&
       selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
 
