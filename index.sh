@@ -22,9 +22,9 @@ _mainLoop() {
       selection=$(cat "${tempfile}")
 
     if [[ "${#selection}" -gt 0 ]]; then
-      _ghViewReadme "${selection}"    # view README.md
-      _previewFiles "${selection}" || # preview files in repo
-        _mainLoop                     # handle empty repos
+      _ghViewReadme "${selection}" &&   # view README.md
+        _previewFiles "${selection}" || # preview files in repo
+        _mainLoop                       # handle empty repos
     else
       _mainLoop
     fi
