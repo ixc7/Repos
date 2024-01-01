@@ -3,7 +3,6 @@
 selfdir="$(dirname "${0}")"
 
 source "${selfdir}/paginatedList.sh"
-source "${selfdir}/previewFiles.sh"
 source "${selfdir}/util.sh"
 
 _mainLoop() {
