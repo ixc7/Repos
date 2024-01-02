@@ -96,8 +96,7 @@ _singlePage() {
       echo "PREV_PAGE" >"${outfile}"
       break
       ;;
-    "") # enter
-      # tput rmcup
+    "") # enter, spacebar
       if [[ ${#outfile} -eq 0 ]]; then
         _printItem
         echo
@@ -106,8 +105,7 @@ _singlePage() {
       fi
       break
       ;;
-    "q" | "Q" | "$'\e'") # q or ESC key: quit
-      # tput rmcup
+    "q" | "Q" | "$'\e'") # q or ESC key: quit # TODO: fix
       return 1
       ;;
     esac
@@ -148,40 +146,74 @@ _multiplePages() {
     items=(${items[@]:${max}})
   done
 
-  # for i in "${!pages[@]}"; do
   index=0
   while true; do
-    # declare -a currentPage=(${pages[i]})
+    selection=""
     declare -a currentPage=(${pages[index]})
 
     _singlePage "${currentPage[@]}" -o "${outfile}" &&
-      selection="$(cat "${outfile}")" || selection=""
+      selection="$(cat "${outfile}")"
 
-    # if [[ ${#selection} -gt 0 ]]; then
     if [[ ${selection} == "NEXT_PAGE" ]]; then
       echo "" >${outfile}
       tempCurrent=(${pages[$((index + 1))]})
-      [[ ${#tempCurrent[@]} -gt 0 ]] && index=$((index + 1))
+      [[ ${#tempCurrent[@]} -gt 0 ]] &&
+        index=$((index + 1))
+
     elif [[ ${selection} == "PREV_PAGE" ]]; then
       echo "" >${outfile}
       tempIndex=$((index - 1))
       [[ ${tempIndex} -ge 0 ]] &&
         tempCurrent=(${pages[$((index - 1))]}) &&
-        [[ ${#tempCurrent[@]} -gt 0 ]] && index=$((index - 1))
+        [[ ${#tempCurrent[@]} -gt 0 ]] &&
+        index=$((index - 1))
     else
       break
     fi
-    # fi
   done
 }
 
 _viewFileTree() {
   outfile=$(mktemp)
+
   repoName="${*}"
   branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch')
-  treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true") # TODO: dirs
-  urlJSON=$(echo "${treeJSON}" | jq '.tree[]? | if .type == "blob" then .url else empty end' 2>/dev/null)
-  pathJSON=$(echo "${treeJSON}" | jq '.tree[]? | if .type == "blob" then .path else empty end' 2>/dev/null)
+
+  # treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true") # TODO: multi level directory tree
+  treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}")
+
+  # debug
+  # TEMPJSON_RECURSIVE=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true")
+  # TEMPJSON_FLAT=$(gh api "repos/${repoName}/git/trees/${branchName}")
+  # echo "${TEMPJSON_RECURSIVE}" | jq -r . > "TEMPJSON_RECURSIVE.json"
+  # echo "${TEMPJSON_FLAT}" | jq -r . > "TEMPJSON_FLAT.json"
+
+  # urlJSON=$(
+  #   echo "${treeJSON}" |
+  #   jq '
+  #       .tree[]? | if .type == "blob" then .url else empty end
+  #   ' 2>/dev/null
+  # )
+  # pathJSON=$(
+  #   echo "${treeJSON}" |
+  #   jq '
+  #     .tree[]? | if .type == "blob" then .path else empty end
+  #   ' 2>/dev/null
+  # )
+
+  urlJSON=$(
+    echo "${treeJSON}" |
+      jq '
+        .tree[]? | .url
+    ' 2>/dev/null
+  )
+  pathJSON=$(
+    echo "${treeJSON}" |
+      jq '
+      .tree[]? | .path
+    ' 2>/dev/null
+  )
+
   declare -a urlNames="(${urlJSON})"
   declare -a pathNames="(${pathJSON})"
 
@@ -201,12 +233,16 @@ _viewFileTree() {
     # match selected path to corresponding url
     for i in "${!pathNames[@]}"; do
       if [[ "${pathNames[i]}" == "${selection}" ]]; then
-        fileUrl=$(echo "${urlNames[i]}" | sed 's/.*github.com\/*//')
-        tempfile="/tmp/$(echo -n "${pathNames[i]}" | tr '/' '_')"
+        fileUrl="${urlNames[i]}"
+        tempBuffer="/tmp/$(echo -n "${pathNames[i]}" | tr '/' '_')"
 
         # decode file contents and open in editor
-        gh api "${fileUrl}" | jq -r '.content' | base64 -d >"${tempfile}" &&
-          ${EDITOR} "${tempfile}"
+        gh api "${fileUrl}" |
+          jq -r '.content? // .tree?' |
+          base64 -d >"${tempBuffer}" ||
+          echo "'${selection}' is a directory." >${tempBuffer}
+
+        ${EDITOR} "${tempBuffer}"
       fi
     done
   done
