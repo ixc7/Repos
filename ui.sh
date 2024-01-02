@@ -3,7 +3,7 @@
 # https://docs.github.com/en/rest/repos/contents
 # https://docs.github.com/en/rest/git/trees
 
-_singlePage() {
+_viewSinglePage() {
   trap "tput rmcup" RETURN
 
   outfile=""
@@ -22,7 +22,6 @@ _singlePage() {
     pos=${max}
     tput cup ${max} 0
   }
-
   _printItem() { echo -ne "${items[pos]}\r"; }
   _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
 
@@ -112,7 +111,7 @@ _singlePage() {
   done
 }
 
-_multiplePages() {
+_viewMultiplePages() {
   declare -a items=()
   declare -a pages=()
   max=$(tput lines) # decrease by 1?
@@ -150,7 +149,7 @@ _multiplePages() {
     selection=""
     declare -a currentPage=(${pages[index]})
 
-    _singlePage "${currentPage[@]}" -o "${outfile}" &&
+    _viewSinglePage "${currentPage[@]}" -o "${outfile}" &&
       selection="$(cat "${outfile}")"
 
     if [[ ${selection} == "NEXT_PAGE" ]]; then
@@ -174,22 +173,9 @@ _multiplePages() {
 
 _viewFileTree() {
   outfile=$(mktemp)
-
-  # repoName="${*}"
-  # branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch')
-  # treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}") # ?recursive=true
-  treeJSON="${*}"
-
-  urlNamesJSON=$(
-    echo "${treeJSON}" |
-      jq '.tree[]? | .url'
-  )
+  urlNamesJSON=$(echo "${*}" | jq '.tree[]? | .url')
+  pathNamesJSON=$(echo "${*}" | jq '.tree[]? | .path')
   declare -a urlNames="(${urlNamesJSON})"
-
-  pathNamesJSON=$(
-    echo "${treeJSON}" |
-      jq '.tree[]? | .path'
-  )
   declare -a pathNames="(${pathNamesJSON})"
 
   # repo is empty
@@ -199,7 +185,7 @@ _viewFileTree() {
     selection=""
     echo "" >${outfile}
 
-    _multiplePages "${pathNames[@]}" -o "${outfile}" &&
+    _viewMultiplePages "${pathNames[@]}" -o "${outfile}" &&
       selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
 
     [[ "${#selection}" -eq 0 ]] && break
@@ -213,11 +199,11 @@ _viewFileTree() {
         # decode file contents and open in editor
         gh api "${fileUrl}" |
           jq -r '.content? // .tree?' |
-          base64 -d >"${tempBuffer}" &&
+          base64 -d >"${tempBuffer}" 2>/dev/null &&
           ${EDITOR} "${tempBuffer}" ||
-          _viewFileTree "$(gh api ${fileUrl})"
-        # || echo "'${selection}' is a directory." >${tempBuffer}
 
+          # not a file; view filetree in nested directory
+          _viewFileTree "$(gh api ${fileUrl})"
       fi
     done
   done

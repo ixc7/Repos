@@ -17,13 +17,13 @@ _mainLoop() {
     _mainLoop
 
   while true; do
-    _multiplePages "${searchResults[@]}" -o "${outfile}" &&
+    _viewMultiplePages "${searchResults[@]}" -o "${outfile}" &&
       selection=$(cat "${outfile}")
 
-    branchName=$(gh api "repos/${selection}" | jq -r '.default_branch')
-    treeJSON=$(gh api "repos/${selection}/git/trees/${branchName}")
-
     if [[ "${#selection}" -gt 0 ]]; then
+      branchName=$(gh api "repos/${selection}" | jq -r '.default_branch')
+      treeJSON=$(gh api "repos/${selection}/git/trees/${branchName}")
+
       _viewReadme "${selection}" &&    # view README.md
         _viewFileTree "${treeJSON}" || # preview files in repo
         _mainLoop                      # handle empty repos
