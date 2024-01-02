@@ -6,10 +6,11 @@
 _singlePage() {
   trap "tput rmcup" RETURN
 
-  declare -a items=()
   outfile=""
   max=0
   pos=0
+
+  declare -a items=()
 
   _mvUp() { echo -ne "\x1b[1A\r"; }
   _mvDown() { echo -ne "\x1b[1B\r"; }
@@ -43,8 +44,7 @@ _singlePage() {
 
   _parseArgs "${@}"
 
-  [[ ${#items[@]} -eq 0 ]] &&
-    return 1
+  [[ ${#items[@]} -eq 0 ]] && return 1
 
   # limit range to screen height
   max="$((${#items[@]} - 1))"
@@ -138,8 +138,7 @@ _multiplePages() {
   _parseArgs "${@}"
 
   while true; do
-    [[ ${#items[@]} -eq 0 ]] &&
-      break
+    [[ ${#items[@]} -eq 0 ]] && break
 
     pages[pageCount]="${items[*]:0:${max}}"
     pageCount=$((pageCount + 1))
@@ -176,54 +175,29 @@ _multiplePages() {
 _viewFileTree() {
   outfile=$(mktemp)
 
-  repoName="${*}"
-  branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch')
+  # repoName="${*}"
+  # branchName=$(gh api "repos/${repoName}" | jq -r '.default_branch')
+  # treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}") # ?recursive=true
+  treeJSON="${*}"
 
-  # treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true") # TODO: multi level directory tree
-  treeJSON=$(gh api "repos/${repoName}/git/trees/${branchName}")
-
-  # debug
-  # TEMPJSON_RECURSIVE=$(gh api "repos/${repoName}/git/trees/${branchName}?recursive=true")
-  # TEMPJSON_FLAT=$(gh api "repos/${repoName}/git/trees/${branchName}")
-  # echo "${TEMPJSON_RECURSIVE}" | jq -r . > "TEMPJSON_RECURSIVE.json"
-  # echo "${TEMPJSON_FLAT}" | jq -r . > "TEMPJSON_FLAT.json"
-
-  # urlJSON=$(
-  #   echo "${treeJSON}" |
-  #   jq '
-  #       .tree[]? | if .type == "blob" then .url else empty end
-  #   ' 2>/dev/null
-  # )
-  # pathJSON=$(
-  #   echo "${treeJSON}" |
-  #   jq '
-  #     .tree[]? | if .type == "blob" then .path else empty end
-  #   ' 2>/dev/null
-  # )
-
-  urlJSON=$(
+  urlNamesJSON=$(
     echo "${treeJSON}" |
-      jq '
-        .tree[]? | .url
-    ' 2>/dev/null
+      jq '.tree[]? | .url'
   )
-  pathJSON=$(
-    echo "${treeJSON}" |
-      jq '
-      .tree[]? | .path
-    ' 2>/dev/null
-  )
+  declare -a urlNames="(${urlNamesJSON})"
 
-  declare -a urlNames="(${urlJSON})"
-  declare -a pathNames="(${pathJSON})"
+  pathNamesJSON=$(
+    echo "${treeJSON}" |
+      jq '.tree[]? | .path'
+  )
+  declare -a pathNames="(${pathNamesJSON})"
 
   # repo is empty
-  [[ ${#pathNames[@]} -eq 0 ]] &&
-    return 1
+  [[ ${#pathNames[@]} -eq 0 ]] && return 1
 
   while true; do
-    echo "" >${outfile}
     selection=""
+    echo "" >${outfile}
 
     _multiplePages "${pathNames[@]}" -o "${outfile}" &&
       selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
@@ -239,10 +213,11 @@ _viewFileTree() {
         # decode file contents and open in editor
         gh api "${fileUrl}" |
           jq -r '.content? // .tree?' |
-          base64 -d >"${tempBuffer}" ||
-          echo "'${selection}' is a directory." >${tempBuffer}
+          base64 -d >"${tempBuffer}" &&
+          ${EDITOR} "${tempBuffer}" ||
+          _viewFileTree "$(gh api ${fileUrl})"
+        # || echo "'${selection}' is a directory." >${tempBuffer}
 
-        ${EDITOR} "${tempBuffer}"
       fi
     done
   done
