@@ -1,15 +1,11 @@
 #!/usr/bin/env bash
 
-# https://docs.github.com/en/rest/repos/contents
-# https://docs.github.com/en/rest/git/trees
-
 _viewSinglePage() {
   trap "tput rmcup" RETURN
 
   outfile=""
   max=0
   pos=0
-
   declare -a items=()
 
   _mvUp() { echo -ne "\x1b[1A\r"; }
@@ -25,23 +21,19 @@ _viewSinglePage() {
   _printItem() { echo -ne "${items[pos]}\r"; }
   _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
 
-  _parseArgs() {
-    while [[ ${#*} -gt 0 ]]; do
-      case ${1} in
-      -o | --outfile)
-        shift
-        outfile="${1}"
-        shift
-        ;;
-      *)
-        items+=("${1}")
-        shift
-        ;;
-      esac
-    done
-  }
-
-  _parseArgs "${@}"
+  while [[ ${#*} -gt 0 ]]; do
+    case ${1} in
+    -o | --outfile)
+      shift
+      outfile="${1}"
+      shift
+      ;;
+    *)
+      items+=("${1}")
+      shift
+      ;;
+    esac
+  done
 
   [[ ${#items[@]} -eq 0 ]] && return 1
 
@@ -96,12 +88,8 @@ _viewSinglePage() {
       break
       ;;
     "") # enter, spacebar
-      if [[ ${#outfile} -eq 0 ]]; then
-        _printItem
-        echo
-      else
+      [[ -f ${outfile} ]] &&
         echo "${items[pos]}" >"${outfile}"
-      fi
       break
       ;;
     "q" | "Q" | "$'\e'") # q or ESC key: quit # TODO: fix
@@ -112,30 +100,27 @@ _viewSinglePage() {
 }
 
 _viewMultiplePages() {
-  declare -a items=()
-  declare -a pages=()
   max=$(tput lines) # decrease by 1?
   pageCount=0
   outfile=""
+  declare -a items=()
+  declare -a pages=()
 
-  _parseArgs() {
-    while [[ ${#*} -gt 0 ]]; do
-      case ${1} in
-      -o | --outfile)
-        shift
-        outfile="${1}"
-        shift
-        ;;
-      *)
-        items+=($(echo "${1}" | tr ' ' '\\')) # escape spaces
-        shift
-        ;;
-      esac
-    done
-  }
+  while [[ ${#*} -gt 0 ]]; do
+    case ${1} in
+    -o | --outfile)
+      shift
+      outfile="${1}"
+      shift
+      ;;
+    *)
+      items+=($(echo "${1}" | tr ' ' '\\')) # escape spaces
+      shift
+      ;;
+    esac
+  done
 
-  _parseArgs "${@}"
-
+  # split items into pages
   while true; do
     [[ ${#items[@]} -eq 0 ]] && break
 
@@ -147,24 +132,28 @@ _viewMultiplePages() {
   index=0
   while true; do
     selection=""
+    echo "" >${outfile}
+
     declare -a currentPage=(${pages[index]})
 
     _viewSinglePage "${currentPage[@]}" -o "${outfile}" &&
       selection="$(cat "${outfile}")"
 
     if [[ ${selection} == "NEXT_PAGE" ]]; then
-      echo "" >${outfile}
-      tempCurrent=(${pages[$((index + 1))]})
-      [[ ${#tempCurrent[@]} -gt 0 ]] &&
-        index=$((index + 1))
+      incremented=$((index + 1))
+      nextPage=(${pages[${incremented}]})
+
+      [[ ${#nextPage[@]} -gt 0 ]] &&
+        index=${incremented}
 
     elif [[ ${selection} == "PREV_PAGE" ]]; then
-      echo "" >${outfile}
-      tempIndex=$((index - 1))
-      [[ ${tempIndex} -ge 0 ]] &&
-        tempCurrent=(${pages[$((index - 1))]}) &&
-        [[ ${#tempCurrent[@]} -gt 0 ]] &&
-        index=$((index - 1))
+      decremented=$((index - 1))
+
+      [[ ${decremented} -ge 0 ]] &&
+        prevPage=(${pages[${decremented}]}) &&
+        [[ ${#prevPage[@]} -gt 0 ]] &&
+        index=${decremented}
+
     else
       break
     fi
@@ -183,7 +172,6 @@ _viewFileTree() {
 
   while true; do
     selection=""
-    echo "" >${outfile}
 
     _viewMultiplePages "${pathNames[@]}" -o "${outfile}" &&
       selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
