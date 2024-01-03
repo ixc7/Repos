@@ -199,6 +199,7 @@ _viewFileTree() {
           base64 -d >"${tempBuffer}" 2>/dev/null &&
           ${EDITOR} "${tempBuffer}" ||
 
+          # TODO: FIX
           # not a file; view filetree in nested directory
           _viewFileTree "$(gh api ${fileUrl})"
       fi
