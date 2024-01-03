@@ -197,9 +197,10 @@ _viewFileTree() {
         gh api "${fileUrl}" |
           jq -r '.content? // .tree?' |
           base64 -d >"${tempBuffer}" 2>/dev/null &&
+          tempBufferLength="$(cat ${tempBuffer})" &&
+          [[ ${#tempBufferLength} -gt 0 ]] &&
           ${EDITOR} "${tempBuffer}" ||
 
-          # TODO: FIX
           # not a file; view filetree in nested directory
           _viewFileTree "$(gh api ${fileUrl})"
       fi
