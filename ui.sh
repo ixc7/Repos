@@ -97,6 +97,13 @@ _viewSinglePage() {
     "q" | "Q" | "$'\e'") # q or ESC key: quit # TODO: fix
       return 1
       ;;
+    "c")
+      clear
+      gh repo clone "${items[pos]}" &&
+        echo -e "\nsaved to '$(pwd)/\x1b[1m\x1b[38;5;10m$(echo ${items[pos]} | cut -d '/' -f 2)\x1b[0m'\n"
+      read -rsn1 -p "press any key to continue "
+      break
+      ;;
     esac
   done
 }
