@@ -48,8 +48,10 @@ _viewSinglePage() {
   trap "tput rmcup; exit 1" SIGINT
   tput smcup
   for ((i = 0; i < max; i += 1)); do
-    echo "${items[i]}" # skipping last item on first render, needs `echo -n`
+    echo "${items[i]}"
   done
+  _mvBottom # temp fix for not printing last item in list
+  _printItem
   _mvTop
   _printItemBold
 
