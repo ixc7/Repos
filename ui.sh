@@ -187,13 +187,26 @@ _viewFileTree() {
   declare -a urlNames="(${urlNamesJSON})"
   declare -a pathNames="(${pathNamesJSON})"
 
+  # TODO
+  declare -a coloredPathNames=($(echo "${*}" | jq -r '
+    .tree[] | 
+    if .type == "tree" then 
+      "\\x1b[1m" + "\\x1b[38;5;81m" + .path  + "/" + "\\x1b[0m" 
+    elif .type == "blob" then
+      "\\x1b[1m" + "\\x1b[38;5;163m" + .path + "\\x1b[0m" 
+    else 
+      empty 
+    end 
+  '))
+
   # repo is empty
   [[ ${#pathNames[@]} -eq 0 ]] && return 1
 
   # browse files
   while true; do
+    # _viewMultiplePages "${coloredPathNames[@]}" -o "${outfile}" &&
     _viewMultiplePages "${pathNames[@]}" -o "${outfile}" &&
-      selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
+      selection=$(echo -e $(cat "${outfile}" | tr '\\' ' ')) # un escape spaces
 
     # quit
     [[ "${#selection}" -eq 0 ]] && break
