@@ -11,7 +11,6 @@ _showHelp() {
 
   # unindenting the message below,
   # so i don't have to format it above
-
   while IFS="" read -r line; do
     # ignore blank lines
     charsOnly="${line/ //}"

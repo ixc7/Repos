@@ -23,7 +23,7 @@ _viewSinglePage() {
   # parse args
   while [[ ${#*} -gt 0 ]]; do
     case ${1} in
-    -o | --outfile)
+    -o | --outfile) # outfile is passed around as 'props'
       shift
       outfile="${1}"
       shift
@@ -63,7 +63,7 @@ _viewSinglePage() {
   while true; do
     read -rsn1 keypress
     case "${keypress}" in
-    "A") # up or left
+    "A") # up
       if [[ pos -gt 0 ]]; then
         _printItem
         ((pos -= 1))
@@ -98,9 +98,8 @@ _viewSinglePage() {
         echo "${items[pos]}" >"${outfile}"
       break
       ;;
-    "q" | "Q" | "$'\e'") # quit
+    "q" | "Q" | "$'\e'") # quit (TODO: fix ESC key)
       return 1
-      # TODO: fix ESC key
       ;;
     "c") # clone repo
       clear
@@ -114,7 +113,7 @@ _viewSinglePage() {
 }
 
 _viewMultiplePages() {
-  max=$(tput lines) # decrease by 1?
+  maxHeight=$(tput lines)
   pageCount=0
   index=0
   outfile=""
@@ -124,7 +123,7 @@ _viewMultiplePages() {
   # parse args
   while [[ ${#*} -gt 0 ]]; do
     case ${1} in
-    -o | --outfile)
+    -o | --outfile) # 'props' again
       shift
       outfile="${1}"
       shift
@@ -140,9 +139,9 @@ _viewMultiplePages() {
   while true; do
     [[ ${#items[@]} -eq 0 ]] && break
 
-    pages[pageCount]="${items[*]:0:${max}}"
+    pages[pageCount]="${items[*]:0:${maxHeight}}"
     pageCount=$((pageCount + 1))
-    items=(${items[@]:${max}})
+    items=(${items[@]:${maxHeight}})
   done
 
   # browse pages
@@ -180,7 +179,7 @@ _viewMultiplePages() {
 
 _viewFileTree() {
   selection=""
-  outfile=$(mktemp)
+  outfile=$(mktemp) # NOT props
   # using two arrays for pathname and associated url,
   # because bash doesn't do nested arrays.
   urlNamesJSON=$(echo "${*}" | jq '.tree[]? | .url')

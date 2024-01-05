@@ -6,7 +6,7 @@ source "${selfdir}/ui.sh"
 source "${selfdir}/util.sh"
 
 _mainLoop() {
-  outfile=$(mktemp)
+  outfile=$(mktemp) # used to communicate between functions
   q=$(_getInput "${@}")
 
   [[ ${#q} -gt 0 ]] &&
