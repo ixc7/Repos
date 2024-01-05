@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
 
 _viewSinglePage() {
-  trap "tput rmcup" RETURN
-
   outfile=""
   max=0
   pos=0
   declare -a items=()
 
+  # utils
   _mvUp() { echo -ne "\x1b[1A\r"; }
   _mvDown() { echo -ne "\x1b[1B\r"; }
   _mvTop() {
@@ -21,6 +20,7 @@ _viewSinglePage() {
   _printItem() { echo -ne "${items[pos]}\r"; }
   _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
 
+  # parse args
   while [[ ${#*} -gt 0 ]]; do
     case ${1} in
     -o | --outfile)
@@ -35,18 +35,22 @@ _viewSinglePage() {
     esac
   done
 
+  # empty list
   [[ ${#items[@]} -eq 0 ]] && return 1
 
   # limit range to screen height
   max="$((${#items[@]} - 1))"
-  maxLines=$(($(tput lines) - 1))
+  heightLimit=$(($(tput lines) - 1))
 
-  [[ ${max} -gt ${maxLines} ]] &&
-    max=${maxLines}
+  [[ ${max} -gt ${heightLimit} ]] &&
+    max=${heightLimit}
 
-  # render list
+  # enter altbuf
+  trap "tput rmcup" RETURN
   trap "tput rmcup; exit 1" SIGINT
   tput smcup
+
+  # render list of results
   for ((i = 0; i < max; i += 1)); do
     echo "${items[i]}"
   done
@@ -94,10 +98,11 @@ _viewSinglePage() {
         echo "${items[pos]}" >"${outfile}"
       break
       ;;
-    "q" | "Q" | "$'\e'") # q or ESC key: quit # TODO: fix
+    "q" | "Q" | "$'\e'") # quit
       return 1
+      # TODO: fix ESC key
       ;;
-    "c")
+    "c") # clone repo
       clear
       gh repo clone "${items[pos]}" &&
         echo -e "\nsaved to '$(pwd)/\x1b[1m\x1b[38;5;10m$(echo ${items[pos]} | cut -d '/' -f 2)\x1b[0m'\n"
@@ -111,10 +116,12 @@ _viewSinglePage() {
 _viewMultiplePages() {
   max=$(tput lines) # decrease by 1?
   pageCount=0
+  index=0
   outfile=""
   declare -a items=()
   declare -a pages=()
 
+  # parse args
   while [[ ${#*} -gt 0 ]]; do
     case ${1} in
     -o | --outfile)
@@ -129,7 +136,7 @@ _viewMultiplePages() {
     esac
   done
 
-  # split items into pages
+  # split input into multiple page arrays
   while true; do
     [[ ${#items[@]} -eq 0 ]] && break
 
@@ -138,31 +145,33 @@ _viewMultiplePages() {
     items=(${items[@]:${max}})
   done
 
-  index=0
+  # browse pages
   while true; do
     selection=""
-    echo "" >${outfile}
-
     declare -a currentPage=(${pages[index]})
 
+    # clear previous selection
+    echo "" >${outfile}
+
+    # render current page
     _viewSinglePage "${currentPage[@]}" -o "${outfile}" &&
       selection="$(cat "${outfile}")"
 
+    # show next page if exists
     if [[ ${selection} == "NEXT_PAGE" ]]; then
-      incremented=$((index + 1))
-      nextPage=(${pages[${incremented}]})
+      plusOne=$((index + 1))
+      nextPage=(${pages[${plusOne}]})
+      [[ ${#nextPage[@]} -gt 0 ]] && index=${plusOne}
 
-      [[ ${#nextPage[@]} -gt 0 ]] &&
-        index=${incremented}
-
+    # show prev page if exists
     elif [[ ${selection} == "PREV_PAGE" ]]; then
-      decremented=$((index - 1))
-
-      [[ ${decremented} -ge 0 ]] &&
-        prevPage=(${pages[${decremented}]}) &&
+      minusOne=$((index - 1))
+      [[ ${minusOne} -ge 0 ]] &&
+        prevPage=(${pages[${minusOne}]}) &&
         [[ ${#prevPage[@]} -gt 0 ]] &&
-        index=${decremented}
+        index=${minusOne}
 
+    # enter, quit, clone...
     else
       break
     fi
@@ -170,7 +179,10 @@ _viewMultiplePages() {
 }
 
 _viewFileTree() {
+  selection=""
   outfile=$(mktemp)
+  # using two arrays for pathname and associated url,
+  # because bash doesn't do nested arrays.
   urlNamesJSON=$(echo "${*}" | jq '.tree[]? | .url')
   pathNamesJSON=$(echo "${*}" | jq '.tree[]? | .path')
   declare -a urlNames="(${urlNamesJSON})"
@@ -179,12 +191,12 @@ _viewFileTree() {
   # repo is empty
   [[ ${#pathNames[@]} -eq 0 ]] && return 1
 
+  # browse files
   while true; do
-    selection=""
-
     _viewMultiplePages "${pathNames[@]}" -o "${outfile}" &&
       selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
 
+    # quit
     [[ "${#selection}" -eq 0 ]] && break
 
     # match selected path to corresponding url
@@ -193,7 +205,7 @@ _viewFileTree() {
         fileUrl="${urlNames[i]}"
         tempBuffer="/tmp/$(echo -n "${pathNames[i]}" | tr '/' '_')"
 
-        # decode file contents and open in editor
+        # fetch+decode file contents and open in editor
         gh api "${fileUrl}" |
           jq -r '.content? // .tree?' |
           base64 -d >"${tempBuffer}" 2>/dev/null &&
