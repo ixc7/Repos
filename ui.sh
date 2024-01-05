@@ -52,7 +52,7 @@ _viewSinglePage() {
 
   # render list of results
   for ((i = 0; i < max; i += 1)); do
-    echo "${items[i]}"
+    echo -e "${items[i]}"
   done
   _mvBottom # temp fix for not printing last item in list
   _printItem
@@ -95,7 +95,7 @@ _viewSinglePage() {
       ;;
     "") # enter, spacebar
       [[ -f ${outfile} ]] &&
-        echo "${items[pos]}" >"${outfile}"
+        echo -e "${items[pos]}" | w3m -dump >"${outfile}" # using w3m to remove color... for now.
       break
       ;;
     "q" | "Q" | "$'\e'") # quit (TODO: fix ESC key)
@@ -191,7 +191,7 @@ _viewFileTree() {
   declare -a coloredPathNames=($(echo "${*}" | jq -r '
     .tree[] | 
     if .type == "tree" then 
-      "\\x1b[1m" + "\\x1b[38;5;81m" + .path  + "/" + "\\x1b[0m" 
+      "\\x1b[1m" + "\\x1b[38;5;81m" + .path + "\\x1b[0m" 
     elif .type == "blob" then
       "\\x1b[1m" + "\\x1b[38;5;163m" + .path + "\\x1b[0m" 
     else 
@@ -204,9 +204,8 @@ _viewFileTree() {
 
   # browse files
   while true; do
-    # _viewMultiplePages "${coloredPathNames[@]}" -o "${outfile}" &&
-    _viewMultiplePages "${pathNames[@]}" -o "${outfile}" &&
-      selection=$(echo -e $(cat "${outfile}" | tr '\\' ' ')) # un escape spaces
+    _viewMultiplePages "${coloredPathNames[@]}" -o "${outfile}" &&
+      selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
 
     # quit
     [[ "${#selection}" -eq 0 ]] && break

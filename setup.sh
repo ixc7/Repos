@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-declare -a dependencies=("awk" "jq" "gh" "bat" "glow" "shfmt")
+declare -a dependencies=("awk" "jq" "gh" "bat" "glow" "shfmt" "w3m")
 declare -a notInstalled=()
 
 for i in "${dependencies[@]}"; do
