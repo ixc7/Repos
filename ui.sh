@@ -187,13 +187,13 @@ _viewFileTree() {
   declare -a urlNames="(${urlNamesJSON})"
   declare -a pathNames="(${pathNamesJSON})"
 
-  # TODO
+  # using `sub()` filter to replace spaces w backslashes
   declare -a coloredPathNames=($(echo "${*}" | jq -r '
     .tree[] | 
     if .type == "tree" then 
-      "\\x1b[1m" + "\\x1b[38;5;81m" + .path + "\\x1b[0m" 
+      "\\x1b[1m" + "\\x1b[38;5;81m" + .path + "\\x1b[0m" | sub(" "; "\\"; "g") 
     elif .type == "blob" then
-      "\\x1b[1m" + "\\x1b[38;5;163m" + .path + "\\x1b[0m" 
+      "\\x1b[1m" + "\\x1b[38;5;163m" + .path + "\\x1b[0m" | sub(" "; "\\"; "g")
     else 
       empty 
     end 
