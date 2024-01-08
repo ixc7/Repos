@@ -17,8 +17,8 @@ _viewSinglePage() {
     pos=${max}
     tput cup ${max} 0
   }
-  _printItem() { echo -ne "${items[pos]}\r"; }
-  _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r"; }
+  _printItem() { echo -ne "${items[pos]}\r" | tr '\\' ' '; }
+  _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r" | tr '\\' ' '; }
 
   # parse args
   while [[ ${#*} -gt 0 ]]; do
@@ -52,7 +52,7 @@ _viewSinglePage() {
 
   # render list of results
   for ((i = 0; i < max; i += 1)); do
-    echo -e "${items[i]}"
+    echo -e "${items[i]}" | tr '\\' ' '
   done
   _mvBottom # temp fix for not printing last item in list
   _printItem
@@ -191,9 +191,9 @@ _viewFileTree() {
   declare -a coloredPathNames=($(echo "${*}" | jq -r '
     .tree[] | 
     if .type == "tree" then 
-      "\\x1b[1m" + "\\x1b[38;5;81m" + .path + "\\x1b[0m" | sub(" "; "\\"; "g") 
+       "\\x1b[38;5;81m" + .path + "\\x1b[0m" | sub(" "; "\\"; "g") 
     elif .type == "blob" then
-      "\\x1b[1m" + "\\x1b[38;5;163m" + .path + "\\x1b[0m" | sub(" "; "\\"; "g")
+       "\\x1b[38;5;163m" + .path + "\\x1b[0m" | sub(" "; "\\"; "g")
     else 
       empty 
     end 
