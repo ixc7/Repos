@@ -14,6 +14,7 @@ _showHelp() {
   while IFS="" read -r line; do
     # ignore blank lines
     charsOnly="${line/ //}"
+
     if [[ ${#charsOnly} -eq 0 ]]; then
       echo
     else

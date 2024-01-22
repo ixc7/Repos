@@ -19,6 +19,12 @@ _viewSinglePage() {
   }
   _printItem() { echo -ne "${items[pos]}\r" | tr '\\' ' '; }
   _printItemBold() { echo -ne "\x1b[1m${items[pos]}\x1b[0m\r" | tr '\\' ' '; }
+  _printStatusBar() {
+    tput sc
+    tput cup $((${LINES} - 1))
+    echo -ne "\x1b[1m\x1b[38;5;10m[left/right]:navigate [enter/spacebar]:view [c]:clone [q]:back\x1b[0m"
+    tput rc
+  }
 
   # parse args
   while [[ ${#*} -gt 0 ]]; do
@@ -40,7 +46,7 @@ _viewSinglePage() {
 
   # limit range to screen height
   max="$((${#items[@]} - 1))"
-  heightLimit=$(($(tput lines) - 1))
+  heightLimit=$(($(tput lines) - 4))
 
   [[ ${max} -gt ${heightLimit} ]] &&
     max=${heightLimit}
@@ -58,6 +64,8 @@ _viewSinglePage() {
   _printItem
   _mvTop
   _printItemBold
+
+  _printStatusBar
 
   # read every keystroke
   while true; do
@@ -103,9 +111,16 @@ _viewSinglePage() {
       ;;
     "c") # clone repo
       clear
+
       gh repo clone "${items[pos]}" &&
         echo -e "\nsaved to '$(pwd)/\x1b[1m\x1b[38;5;10m$(echo ${items[pos]} | cut -d '/' -f 2)\x1b[0m'\n"
+
       read -rsn1 -p "press any key to continue "
+
+      # same as enter/spacebar
+      [[ -f ${outfile} ]] &&
+        echo -e "${items[pos]}" | w3m -dump >"${outfile}"
+
       break
       ;;
     esac
@@ -172,6 +187,8 @@ _viewMultiplePages() {
 
     # enter, quit, clone...
     else
+      [[ ${#selection} -gt 0 ]] &&
+        echo "loading ${selection}"
       break
     fi
   done
