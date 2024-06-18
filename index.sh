@@ -6,10 +6,13 @@ source "${selfdir}/ui.sh"
 source "${selfdir}/util.sh"
 
 _mainLoop() {
+  clear
+
   outfile=$(mktemp) # used to communicate between functions
   q=$(_getInput "${@}")
 
   [[ ${#q} -gt 0 ]] &&
+    echo "searching for ${q}" &&
     declare -a searchResults="($(_searchRepos "${q}"))"
 
   [[ ${#searchResults[@]} -eq 0 ]] &&

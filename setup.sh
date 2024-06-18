@@ -12,7 +12,7 @@ if [[ ${#notInstalled[@]} -eq 0 ]]; then
 
 else
   text="${notInstalled[@]}"
-  echo "installing: ${text// /, }"
+  echo -e "installing ${text// /, } with \x1b[1mhomebrew\x1b[0m"
 
   brew install ${notInstalled[@]} &&
     echo "all dependencies installed!" && exit 0 ||

@@ -1,5 +1,10 @@
 #!/usr/bin/env bash
 
+_dump() {
+  # using w3m to remove color... for now.
+  echo -e "${@}" | w3m -dump
+}
+
 _viewSinglePage() {
   outfile=""
   max=0
@@ -64,7 +69,6 @@ _viewSinglePage() {
   _printItem
   _mvTop
   _printItemBold
-
   _printStatusBar
 
   # read every keystroke
@@ -103,7 +107,7 @@ _viewSinglePage() {
       ;;
     "") # enter, spacebar
       [[ -f ${outfile} ]] &&
-        echo -e "${items[pos]}" | w3m -dump >"${outfile}" # using w3m to remove color... for now.
+        _dump "${items[pos]}" >"${outfile}"
       break
       ;;
     "q" | "Q" | "$'\e'") # quit (TODO: fix ESC key)
@@ -112,14 +116,15 @@ _viewSinglePage() {
     "c") # clone repo
       clear
 
-      gh repo clone "${items[pos]}" &&
+      repoName=$(_dump "${items[pos]}")
+      gh repo clone "${repoName}" &&
         echo -e "\nsaved to '$(pwd)/\x1b[1m\x1b[38;5;10m$(echo ${items[pos]} | cut -d '/' -f 2)\x1b[0m'\n"
 
       read -rsn1 -p "press any key to continue "
 
       # same as enter/spacebar
       [[ -f ${outfile} ]] &&
-        echo -e "${items[pos]}" | w3m -dump >"${outfile}"
+        _dump "${items[pos]}" >"${outfile}"
 
       break
       ;;
@@ -219,7 +224,7 @@ _viewFileTree() {
   # repo is empty
   [[ ${#pathNames[@]} -eq 0 ]] && return 1
 
-  # browse files
+  # repo not empty; browse files
   while true; do
     _viewMultiplePages "${coloredPathNames[@]}" -o "${outfile}" &&
       selection=$(cat "${outfile}" | tr '\\' ' ') # un escape spaces
